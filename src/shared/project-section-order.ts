@@ -170,6 +170,18 @@ export function sortProjectEntries<
   })
 }
 
+export function partitionRunningFirst<T>(
+  entries: readonly T[],
+  isRunning: (entry: T) => boolean
+): T[] {
+  const running: T[] = []
+  const rest: T[] = []
+  for (const entry of entries) {
+    ;(isRunning(entry) ? running : rest).push(entry)
+  }
+  return [...running, ...rest]
+}
+
 /**
  * Project sections in header order. Each header anchors on the repo that leads manual order, so
  * drag and actions target the same persisted order source the row sorter reads.
@@ -181,14 +193,19 @@ export function orderProjectSections<
   sections: ReadonlyMap<string, E>,
   repoMap: ReadonlyMap<string, R>,
   repoOrder: ReadonlyMap<string, number> | undefined,
-  projectOrderBy: ProjectOrderBy
+  projectOrderBy: ProjectOrderBy,
+  /** Set to lift running projects above idle ones, each keeping the chosen order. */
+  isRunningSection?: (section: E) => boolean
 ): [string, E][] {
   for (const section of sections.values()) {
     section.repo = getManualOrderAnchorRepo(section, repoMap, repoOrder)
   }
   // Why: project header order is its own user choice (projectOrderBy), decoupled from workspace
   // sortBy. Manual uses the canonical repoOrder; Recent follows activity.
-  return sortProjectEntries(Array.from(sections.entries()), projectOrderBy, repoOrder)
+  const sorted = sortProjectEntries(Array.from(sections.entries()), projectOrderBy, repoOrder)
+  return isRunningSection
+    ? partitionRunningFirst(sorted, ([, section]) => isRunningSection(section))
+    : sorted
 }
 
 /** Each repo id's rank in catalog order; the first occurrence wins across hosts. */

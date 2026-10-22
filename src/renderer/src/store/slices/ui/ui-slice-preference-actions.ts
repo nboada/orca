@@ -54,6 +54,11 @@ export function createUiPreferenceActions(set: UISliceSet, get: UISliceGet): Par
     // Why: bare set — persists only via the debounced window.api.ui.set writer in App.tsx, not on its own.
     projectOrderBy: 'manual',
     setProjectOrderBy: (p) => set({ projectOrderBy: p }),
+    runningProjectsFirst: false,
+    setRunningProjectsFirst: (v) => {
+      set({ runningProjectsFirst: v })
+      window.api.ui.set({ runningProjectsFirst: v }).catch(console.error)
+    },
 
     showActiveOnly: false,
     setShowActiveOnly: (v) => set({ showActiveOnly: v }),
@@ -181,13 +186,16 @@ export function createUiPreferenceActions(set: UISliceSet, get: UISliceGet): Par
         window.api.ui.set({ collapsedGroups: [...next] }).catch(console.error)
         return { collapsedGroups: next }
       }),
-    sidebarCollapsibleGroupKeys: [],
-    setSidebarCollapsibleGroupKeys: (keys) =>
+    sidebarCollapsibleGroups: [],
+    setSidebarCollapsibleGroups: (groups) =>
       set((s) =>
-        s.sidebarCollapsibleGroupKeys.length === keys.length &&
-        s.sidebarCollapsibleGroupKeys.every((key, index) => key === keys[index])
+        s.sidebarCollapsibleGroups.length === groups.length &&
+        s.sidebarCollapsibleGroups.every(
+          (group, index) =>
+            group.key === groups[index].key && group.running === groups[index].running
+        )
           ? s
-          : { sidebarCollapsibleGroupKeys: keys }
+          : { sidebarCollapsibleGroups: groups }
       ),
 
     worktreeCardProperties: [...DEFAULT_WORKTREE_CARD_PROPERTIES],

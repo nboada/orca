@@ -5559,7 +5559,10 @@
           "views": "侧边栏视图",
           "addProject": "添加项目",
           "collapseAll": "全部折叠",
-          "expandAll": "全部展开"
+          "expandAll": "全部展开",
+          "activeProjects": "活跃",
+          "idleProjects": "空闲",
+          "activeProjectsFirst": "活跃项目优先"
         },
         "SidebarNav": {
           "80611a8b10": "搜索",

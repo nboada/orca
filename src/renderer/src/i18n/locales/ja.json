@@ -5559,7 +5559,10 @@
           "views": "サイドバービュー",
           "addProject": "プロジェクトを追加",
           "collapseAll": "すべて折りたたむ",
-          "expandAll": "すべて展開"
+          "expandAll": "すべて展開",
+          "activeProjects": "アクティブ",
+          "idleProjects": "アイドル",
+          "activeProjectsFirst": "アクティブなプロジェクトを先頭に"
         },
         "SidebarNav": {
           "80611a8b10": "検索",

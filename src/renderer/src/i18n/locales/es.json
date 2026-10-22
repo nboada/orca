@@ -5573,7 +5573,10 @@
           "views": "Vista de la barra lateral",
           "addProject": "Agregar proyecto",
           "collapseAll": "Contraer todo",
-          "expandAll": "Expandir todo"
+          "expandAll": "Expandir todo",
+          "activeProjects": "Activos",
+          "idleProjects": "Inactivos",
+          "activeProjectsFirst": "Proyectos activos primero"
         },
         "SidebarNav": {
           "80611a8b10": "Buscar",

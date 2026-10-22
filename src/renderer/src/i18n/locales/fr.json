@@ -5703,6 +5703,9 @@
           "addProject": "Ajouter un projet",
           "collapseAll": "Tout réduire",
           "expandAll": "Tout développer",
+          "activeProjects": "Actifs",
+          "idleProjects": "Inactifs",
+          "activeProjectsFirst": "Projets actifs d'abord",
           "projects": "Projets",
           "spaces": "Espaces",
           "views": "Vue de la barre latérale"

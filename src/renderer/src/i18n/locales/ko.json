@@ -5559,7 +5559,10 @@
           "views": "사이드바 보기",
           "addProject": "프로젝트 추가",
           "collapseAll": "모두 접기",
-          "expandAll": "모두 펼치기"
+          "expandAll": "모두 펼치기",
+          "activeProjects": "활성",
+          "idleProjects": "유휴",
+          "activeProjectsFirst": "활성 프로젝트 우선"
         },
         "SidebarNav": {
           "80611a8b10": "검색",

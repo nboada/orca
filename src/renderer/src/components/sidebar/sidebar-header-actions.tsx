@@ -43,13 +43,17 @@ function CollapseAllButton({
 }: {
   preserveWorkspaceBoardOpen: boolean
 }): React.JSX.Element | null {
-  const keys = useAppStore((s) => s.sidebarCollapsibleGroupKeys)
+  const groups = useAppStore((s) => s.sidebarCollapsibleGroups)
   const collapsedGroups = useAppStore((s) => s.collapsedGroups)
   const setGroupsCollapsed = useAppStore((s) => s.setGroupsCollapsed)
-  if (keys.length === 0) {
+  if (groups.length === 0) {
     return null
   }
-  const allCollapsed = keys.every((key) => collapsedGroups.has(key))
+  const allKeys = groups.map((group) => group.key)
+  const idleKeys = groups.filter((group) => !group.running).map((group) => group.key)
+  // Why: running projects stay open so their live terminals remain one click away.
+  const collapseKeys = idleKeys.length > 0 ? idleKeys : allKeys
+  const allCollapsed = collapseKeys.every((key) => collapsedGroups.has(key))
   const label = allCollapsed
     ? translate('auto.components.sidebar.SidebarHeader.expandAll', 'Expand all')
     : translate('auto.components.sidebar.SidebarHeader.collapseAll', 'Collapse all')
@@ -65,7 +69,11 @@ function CollapseAllButton({
           className="text-muted-foreground"
           aria-label={label}
           data-workspace-board-preserve-open={preserveWorkspaceBoardOpen ? '' : undefined}
-          onClick={() => setGroupsCollapsed(keys, !allCollapsed)}
+          onClick={() =>
+            allCollapsed
+              ? setGroupsCollapsed(allKeys, false)
+              : setGroupsCollapsed(collapseKeys, true)
+          }
         >
           <Icon className="size-3.5" strokeWidth={2.25} />
         </Button>

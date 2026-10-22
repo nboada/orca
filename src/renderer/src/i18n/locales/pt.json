@@ -11353,7 +11353,10 @@
           "views": "Visualização da barra lateral",
           "addProject": "Adicionar projeto",
           "collapseAll": "Recolher tudo",
-          "expandAll": "Expandir tudo"
+          "expandAll": "Expandir tudo",
+          "activeProjects": "Ativos",
+          "idleProjects": "Inativos",
+          "activeProjectsFirst": "Projetos ativos primeiro"
         },
         "NewExternalWorktreesInboxLine": {
           "9f2d4c8b17": "Ocultar worktrees externas permanentemente para {{value0}}",

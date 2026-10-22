@@ -5905,7 +5905,10 @@
           "views": "Sidebar view",
           "addProject": "Add project",
           "collapseAll": "Collapse all",
-          "expandAll": "Expand all"
+          "expandAll": "Expand all",
+          "activeProjects": "Active",
+          "idleProjects": "Idle",
+          "activeProjectsFirst": "Active projects first"
         },
         "SidebarNav": {
           "80611a8b10": "Search",
