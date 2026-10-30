@@ -115,6 +115,10 @@ export function appendProjectGroupSections(
     )
   }
 
+  const hasRunningProject = (groupId: string): boolean =>
+    (groupByProjectGroupId.get(groupId) ?? []).some(([key]) => runningSectionKeys?.has(key)) ||
+    (childGroupsByParentId.get(groupId) ?? []).some((child) => hasRunningProject(child.id))
+
   const appendProjectGroup = (projectGroup: ProjectGroup, depth: number): void => {
     const repoEntries = sortRepoEntriesWithinGroup(groupByProjectGroupId.get(projectGroup.id) ?? [])
     const childGroups = childGroupsByParentId.get(projectGroup.id) ?? []
@@ -126,7 +130,8 @@ export function appendProjectGroupSections(
       count: getProjectGroupSubtreeCount(projectGroup.id),
       icon: { kind: 'project' },
       projectGroup,
-      projectGroupDepth: depth
+      projectGroupDepth: depth,
+      ...(hasRunningProject(projectGroup.id) ? { running: true } : {})
     })
     if (!collapsedGroups.has(key)) {
       for (const pair of folderWorkspacesByProjectGroupId.get(projectGroup.id) ?? []) {

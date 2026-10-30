@@ -50,6 +50,7 @@ import type {
 import { orderMainWorktreeFirst, getRenderedNaturalAnchorRepoIds } from './section-order'
 import { withRepoSectionDisplayLabels } from '../project-section-order'
 import { buildOrderedGroups } from './worktree-grouping'
+import { createRunningSectionTest } from './running-sections'
 
 type SidebarOccurrenceSection = WorktreeOccurrenceSection<Worktree> & { group: WorktreeGroupEntry }
 
@@ -113,10 +114,7 @@ export function planSidebarRows(inputs: SidebarRowPlanInputs) {
     runningWorktreeIds,
     runningProjectsFirst = false
   } = inputs
-  const isRunningSection = runningWorktreeIds
-    ? (group: WorktreeGroupEntry) =>
-        group.items.some((worktree) => runningWorktreeIds.has(worktree.id))
-    : undefined
+  const isRunningSection = createRunningSectionTest(worktrees, runningWorktreeIds)
   const projectIndex = buildProjectGroupingIndex(projectGrouping)
   const repoOf = repoOfWorktree ?? ((worktree: Worktree) => repoMap.get(worktree.repoId))
   // Resolve folder membership before groupBy; every mode renders the same set (#15362).
