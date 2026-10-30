@@ -9,9 +9,14 @@ import {
   orchestrationMigrationData
 } from '../../shared/orchestration-rpc-contract'
 import type { PairedRuntimeConnection } from '../../shared/paired-runtime-connection'
-import { launchOrcaApp } from './launch'
+import { openLocalOrca } from './open-local-orca'
 import { getDefaultUserDataPath, readMetadata } from './metadata'
-import { getCliStatus, projectRemoteAppStatus } from './status'
+import {
+  getCliStatus,
+  getOfflineRuntimeAdmission,
+  type OfflineRuntimeAdmission,
+  projectRemoteAppStatus
+} from './status'
 import { sendRequest } from './transport'
 import { RuntimeClientError, RuntimeRpcFailureError, type RuntimeRpcSuccess } from './types'
 import {
@@ -59,9 +64,7 @@ export class RuntimeClient {
   )
   private readonly runtimeSourceFence: RuntimeSourceFence
 
-  // Why: browser commands trigger first-time session init (agent-browser connect +
-  // CDP proxy setup) which can take 15-30s. 60s accommodates cold start without
-  // being so large that genuine hangs go unnoticed.
+  // Browser session cold starts can take 15–30 seconds; allow time for initialization.
   constructor(
     userDataPath = getDefaultUserDataPath(),
     requestTimeoutMs = 60_000,
@@ -165,7 +168,7 @@ export class RuntimeClient {
       return response
     }
     const metadata = readMetadata(this.userDataPath)
-    // Why outside recover(): a refusal here happens before anything is sent, so there is nothing to retry.
+    // Refusal precedes sending, so there is no request to recover.
     const expectedRuntimeSource = await this.runtimeSourceFence.check(metadata, method)
     let response
     try {
@@ -186,11 +189,7 @@ export class RuntimeClient {
     return response
   }
 
-  // Why: centralises the per-method timeout policy. Long-poll inner waiter
-  // budgets live in `params.timeoutMs`; widen the client-side socket timeout
-  // to `timeoutMs + grace` so it doesn't fire before the server has a chance
-  // to resolve. Without this, a 5 min wait would still die at the 60 s default.
-  // See design doc §3.1.
+  // Give server-side waits time to finish before the client transport times out.
   private resolveMethodTimeoutMs(method: string, params?: unknown): number {
     if (method === 'orchestration.workerStart') {
       const requestedValue = getTimeoutMsParam(params)
@@ -255,12 +254,24 @@ export class RuntimeClient {
     return getCliStatus(this.userDataPath)
   }
 
+  async getOfflineRuntimeAdmission(): Promise<OfflineRuntimeAdmission> {
+    if (this.remote) {
+      const status = await this.getCliStatus()
+      return {
+        reachable: status.result.runtime.reachable,
+        legacyPidRunning: status.result.app.running,
+        pid: status.result.app.pid ?? null
+      }
+    }
+    return getOfflineRuntimeAdmission(this.userDataPath)
+  }
+
   private async ensureOrchestrationContractCompatible(timeoutMs: number): Promise<void> {
     if (!this.orchestrationContractCheck) {
       this.orchestrationContractCheck = this.checkOrchestrationContractCompatibility(
         timeoutMs
       ).catch((error: unknown) => {
-        // Why: a failed probe must not be cached, or a retry after a brief outage never reaches the app.
+        // Failed probes must be retried after transient outages.
         this.orchestrationContractCheck = null
         throw error
       })
@@ -283,45 +294,6 @@ export class RuntimeClient {
   }
 
   async openOrca(timeoutMs = 15_000): Promise<RuntimeRpcSuccess<CliStatusResult>> {
-    const initial = await this.getCliStatus()
-    if (this.remote) {
-      return initial
-    }
-
-    // Why: a blocked runtime can't open a window, so spawning the app would
-    // only hit the single-instance lock and exit — bail before launching.
-    if (initial.result.app.desktopWindowStatus === 'blocked') {
-      throwDesktopActivationBlocked()
-    }
-    launchOrcaApp()
-    if (initial.result.app.desktopWindowStatus === 'available') {
-      return initial
-    }
-
-    const startedAt = Date.now()
-    while (Date.now() - startedAt < timeoutMs) {
-      const status = await this.getCliStatus()
-      if (status.result.app.desktopWindowStatus === 'blocked') {
-        throwDesktopActivationBlocked()
-      }
-      if (status.result.app.desktopWindowStatus === 'available') {
-        return status
-      }
-      await delay(250)
-    }
-
-    throw new RuntimeClientError(
-      'runtime_open_timeout',
-      'Timed out waiting for an Orca desktop window. The runtime may still be running headlessly.'
-    )
+    return this.remote ? this.getCliStatus() : openLocalOrca(() => this.getCliStatus(), timeoutMs)
   }
 }
-
-function throwDesktopActivationBlocked(): never {
-  throw new RuntimeClientError(
-    'desktop_activation_blocked',
-    'Orca is running headlessly, but it cannot open a desktop window safely because the persistent terminal provider is unavailable. Quit Orca normally and start the app again; do not use open -n.'
-  )
-}
-
-const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms))
