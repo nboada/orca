@@ -149,7 +149,6 @@ const WorktreeList = React.memo(function WorktreeList({
     [rowModel.occurrencePlan]
   )
   const effectiveCollapsedGroups = rowModel.effectiveCollapsedGroups
-  usePublishCollapsibleGroupKeys(rowModel.sectionRows)
   const selection = useSidebarWorktreeSelection({
     sectionRows: rowModel.sectionRows,
     pinnedDisplayPolicy
@@ -234,8 +233,10 @@ const WorktreeList = React.memo(function WorktreeList({
     placeholderRepoCount: rowModel.placeholderRepoIds.size,
     importedWorktreeCardCount: externalWorktreeCards.importedWorktreesByRepo.size
   })
+  const listHidden = rowModel.rows.length === 0 || filtersHideAllRows
+  usePublishCollapsibleGroupKeys(rowModel.sectionRows, listHidden)
   // Clear Filters must outrank empty project headers when filtering hides every workspace.
-  if (rowModel.rows.length === 0 || filtersHideAllRows) {
+  if (listHidden) {
     return <SidebarWorktreeListEmptyState hasFilters={hasFilters} onClearFilters={clearFilters} />
   }
 
